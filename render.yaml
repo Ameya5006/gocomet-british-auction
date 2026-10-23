@@ -1,0 +1,47 @@
+# All compute plans are explicitly free. Static sites have no compute plan.
+# Set the two public URL values to the actual assigned HTTPS URLs during setup.
+# Use the PostgreSQL database created separately; this file creates no database.
+services:
+  - type: web
+    name: ameya-gocomet-auction-api
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: python -m pip install -r backend/requirements.txt
+    startCommand: >-
+      python -m alembic upgrade head &&
+      python -m backend.app.demo &&
+      python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+  - type: web
+    name: ameya-gocomet-auction
+    runtime: static
+    branch: main
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: VITE_API_BASE_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
