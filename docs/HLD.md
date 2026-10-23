@@ -38,8 +38,8 @@ refetches and errors; failed refreshes retain previously loaded data.
 Money uses BigInt cents in the client and decimal strings over HTTP.
 Local times convert explicitly to ISO UTC; nonexistent DST times are rejected,
 and repeated times use the browser's earlier offset. Calendar dates remain
-strings. Countdown estimates use server time plus monotonic elapsed browser time;
-they do not authorize acceptance.
+strings. The countdown uses server time plus monotonic elapsed browser time;
+the server decides whether a bid is accepted.
 
 ## Schema
 
@@ -68,13 +68,13 @@ activity `(rfq_id, id)`. Foreign keys have no cascading deletes.
 Sessions use UTC. A bid uses one explicit READ COMMITTED transaction:
 
 1. Lock the RFQ with `SELECT FOR UPDATE`, then sample server UTC.
-2. Check timing, supplier, validity and strict improvement; read existing bids.
+2. Check timing, supplier and validity; read existing bids and enforce strict improvement.
 3. Derive current ranks, insert the bid, derive new ranks and compute any extension.
 4. Update current close and insert acceptance/extension activity.
 5. Commit everything together; any failure rolls back all writes.
 
-The lock serializes suppliers and rebids per RFQ. A waiting READ COMMITTED
-statement sees the committed RFQ version and samples time after its wait.
+The lock serializes suppliers and rebids per RFQ. After waiting for the lock,
+the transaction reads the latest committed RFQ and then samples server time.
 Bid sequences allocated under the lock give deterministic tie order;
 rollback sequence gaps are harmless.
 

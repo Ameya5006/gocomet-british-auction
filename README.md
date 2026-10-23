@@ -1,33 +1,10 @@
 # GoComet British Auction RFQ
 
-## Render deployment
+This application lets buyers create freight RFQs and suppliers submit competing
+quotes in a British auction. It ranks quotes and extends the closing time when
+a bid meets the configured trigger, up to a fixed deadline.
 
-[`render.yaml`](render.yaml) defines a free static site and a free Python API,
-using a PostgreSQL database provisioned separately. Deployment is not yet
-verified; no live application URL is available. Connect this repository's `main`
-branch in Render and review that every resource is free before applying the
-Blueprint. Use the existing free database; do not create a duplicate or upgrade.
-
-Keep the API in the same region as that database (adjust `region` before setup).
-Set backend `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` from its
-Render connection details. Use the internal hostname; enter credentials only in
-Render's backend environment settings. Never run tests against this database.
-
-Set the static site's `VITE_API_BASE_URL` to the API's actual HTTPS URL before
-building. Set the API's `CORS_ORIGINS` to a JSON array containing the static site's
-actual HTTPS origin, `http://localhost:5173` and `http://127.0.0.1:5173`.
-If an assigned URL differs from the initial setting, update it and redeploy the
-affected service. Frontend environment changes require a fresh build.
-
-The API runs from the repository root, applies Alembic migrations, seeds the
-non-destructive demonstration and starts one Uvicorn worker. The static site
-builds from `frontend/` and rewrites direct routes to `index.html`.
-
-Free APIs sleep after 15 idle minutes and can take about a minute to wake. If the
-UI reports a connection error, wait and use **Refresh saved data**. After an
-uncertain submission, inspect saved history before submitting again; POSTs are
-never automatically retried. Free databases expire 30 days after creation; record
-the actual expiry in Render once provisioned. See [Render's free limits](https://render.com/docs/free).
+[HLD and schema](docs/HLD.md)
 
 ## Local setup
 
@@ -138,6 +115,33 @@ Suppliers are preconfigured for this demonstration; there is no authentication.
 X=120 keeps this short demo inside the closing window after repeated extensions;
 forced close still caps each advance. Other trigger semantics are in
 [auction rules](docs/HLD.md#auction-rules).
+
+## Render deployment
+
+[`render.yaml`](render.yaml) defines a free Python API and static site using a
+separately provisioned PostgreSQL database.
+
+1. Use a free Render PostgreSQL database and set the API's `region` to match it.
+   Connect the repository's `main` branch in Render and apply the Blueprint with
+   the free API plan.
+2. Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` in the API's
+   environment settings from the database connection details. Use its internal
+   hostname and keep credentials in backend settings. Never run tests against
+   this application database.
+3. Set the static site's `VITE_API_BASE_URL` to the API's HTTPS URL before building.
+   Set the API's `CORS_ORIGINS` to a JSON array containing the static site's HTTPS
+   origin, `http://localhost:5173` and `http://127.0.0.1:5173`. Redeploy after changing
+   these settings; frontend environment changes require a fresh build.
+
+The API runs from the repository root, applies Alembic migrations, seeds the
+non-destructive demonstration and starts one Uvicorn worker. The static site
+builds from `frontend/` and rewrites direct routes to `index.html`.
+
+Free APIs sleep after 15 idle minutes and can take about a minute to wake. If the
+UI reports a connection error, wait and use **Refresh saved data**. After an
+uncertain submission, inspect saved history before submitting again; POSTs are
+never automatically retried. Free databases expire 30 days after creation.
+See [Render's free limits](https://render.com/docs/free).
 
 ## Assumptions and recovery
 
